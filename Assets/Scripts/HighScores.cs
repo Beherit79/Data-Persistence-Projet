@@ -1,25 +1,21 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class HighScores : MonoBehaviour
 {
-    private List<Player> _highScores;
-
     public TextMeshProUGUI playerXTextPrefab;
 
     public TextMeshProUGUI playerXHighScoreTextPrefab;
+    private List<Player> _highScores;
 
     // initialize the high scores from persistent data
     private void Start()
     {
         // initialize example _highScores
-        _highScores = GameManager.Instance.LoadScore() ?? new List<Player>();
-        Debug.Log(_highScores);
+        _highScores = GameManager.Instance.GetPlayers();
+        foreach (var highScore in _highScores) Debug.Log(highScore.Name + " " + highScore.Score);
         DisplayHighScores();
     }
 

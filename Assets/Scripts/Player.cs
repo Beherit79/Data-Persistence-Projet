@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [Serializable]
 public class Player
@@ -16,16 +13,6 @@ public class Player
         this.score = score;
     }
 
-    // public int GetScore()
-    // {
-    //     return _score;
-    // }
-    //
-    // public void SetScore(int score)
-    // {
-    //     _score = score;
-    // }
-
     public string Name
     {
         get => name;
@@ -38,6 +25,11 @@ public class Player
         set => score = value;
     }
 
+    public Player GetPlayer()
+    {
+        return this;
+    }
+
     public static Player CreateFromJson(string jsonString)
     {
         return JsonUtility.FromJson<Player>(jsonString);
@@ -45,7 +37,17 @@ public class Player
 
     public string SaveToString()
     {
-        Debug.Log(this.Name + " " + JsonUtility.ToJson(this));
         return JsonUtility.ToJson(this);
+    }
+
+    public void AddPoints(int points)
+    {
+        var newScore = Score + points;
+        Score = newScore;
+    }
+
+    public void ResetPoint()
+    {
+        Score = 0;
     }
 }

@@ -1,71 +1,78 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    private const int MaxHighScores = 5;
     public static GameManager Instance;
+    public Text bestScoreText;
 
     public bool isGameOver;
-    private Player _player;
+    private Player _bestPlayer;
+    private Player _currentPlayer;
     private List<Player> _players = new List<Player>();
-    private const int MaxHighScores = 5;
 
     private void Awake()
     {
-        // start of new code
         if (Instance != null)
         {
             Destroy(gameObject);
             return;
         }
-        // end of new code
 
         Instance = this;
+        Debug.Log("Initializing GameManager");
         _players = LoadScore();
+        
+        var bestPlayer = Instance.GetBestPlayer();
+        bestScoreText.text = "Best Score: " + bestPlayer.Name + " - " + bestPlayer.Score; 
+        
         DontDestroyOnLoad(gameObject);
     }
 
-    public void AddPoints(int points)
-    {
-        var newScore = _player.Score + points;
-        _player.Score = newScore;
-    }
 
     public static void SetGameOver(bool status)
     {
         Instance.isGameOver = status;
     }
 
-    public void SetPlayer(Player player)
+    public void SetCurrentPlayer(Player player)
     {
-        _player = player;
+        _currentPlayer = player;
     }
 
-    // SerializedClass SaveData
-    [Serializable]
-    public class SaveData
+    public Player GetCurrentPlayer()
     {
-        public List<string> highScores = new List<string>();
+        return _currentPlayer;
     }
 
-    public void SaveScore()
+    public Player GetBestPlayer()
+    {
+        return _bestPlayer;
+    }
+    
+    private void SetBestPlayer(Player player)
+    {
+        _bestPlayer = player;
+    }
+    
+    public void SaveScore(Player player)
     {
         var saveFilePath = GetSaveFilePath();
-
-        Debug.Log(_player.Name + " -> " + _player.Score);
+        var newPlayer = new Player(player.Name, player.Score);
+        Debug.Log(player.Name + " -> " + player.Score);
         var saveData = new SaveData();
-        SetHighScore(_player);
+        SetHighScore(newPlayer);
 
-        foreach (var player in _players)
+        SetBestPlayer(_players[0]);
+        foreach (var p in _players)
         {
-            saveData.highScores.Add(player.SaveToString());
+            Debug.Log("Saving " + p.Name + " -> " + p.Score);
+            saveData.highScores.Add(p.SaveToString());
         }
 
         var json = JsonUtility.ToJson(saveData);
@@ -73,7 +80,7 @@ public class GameManager : MonoBehaviour
     }
 
 
-    public List<Player> LoadScore()
+    private List<Player> LoadScore()
     {
         var saveFilePath = GetSaveFilePath();
 
@@ -86,13 +93,16 @@ public class GameManager : MonoBehaviour
         var json = File.ReadAllText(saveFilePath);
         var saveData = JsonUtility.FromJson<SaveData>(json);
         // transform json to player
-        foreach (var player in saveData.highScores)
-        {
-            _players.Add(Player.CreateFromJson(player));
-        }
+        foreach (var player in saveData.highScores) _players.Add(Player.CreateFromJson(player));
 
         InitializePlayers();
+        SetBestPlayer(_players[0]);
 
+        return _players;
+    }
+
+    public List<Player> GetPlayers()
+    {
         return _players;
     }
 
@@ -101,6 +111,7 @@ public class GameManager : MonoBehaviour
         var nbPlayers = _players.Count;
         for (var i = 0; i < MaxHighScores - nbPlayers; i++)
         {
+            Debug.Log("Adding player " + i);
             var player = new Player("Player " + i, 0);
             _players.Add(player);
         }
@@ -118,25 +129,27 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        var comparePlayersScores = Comparer<Player>.Create((a, b) => b.Score - a.Score);
+        for (var i = 0; i < _players.Count; i++)
+            if (player.Score > _players[i].Score)
+            {
+                Debug.Log(player.Name + " - Score:" + player.Score + " is higher than " + _players[i].Name +
+                          " - Score:" + _players[i].Score);
+                for (var j = _players.Count - 1; j > i; j--) _players[j] = _players[j - 1];
 
-        var index = _players.BinarySearch(player, comparePlayersScores);
-        if (index < 0)
-        {
-            Debug.Log(index + " " + ~index);
-            index = ~index;
-        }
-
-        _players.Insert(index, player);
-
-        if (_players.Count > MaxHighScores)
-        {
-            _players.RemoveAt(MaxHighScores);
-        }
+                _players[i] = player;
+                break;
+            }
     }
 
     private static string GetSaveFilePath()
     {
         return Application.persistentDataPath + "/savefile.json";
+    }
+
+    // SerializedClass SaveData
+    [Serializable]
+    public class SaveData
+    {
+        public List<string> highScores = new List<string>();
     }
 }
