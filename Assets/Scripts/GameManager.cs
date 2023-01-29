@@ -15,6 +15,7 @@ public class GameManager : MonoBehaviour
     public bool isGameOver;
     private Player _player;
     private List<Player> _players = new List<Player>();
+    private const int MaxHighScores = 5;
 
     private void Awake()
     {
@@ -98,7 +99,7 @@ public class GameManager : MonoBehaviour
     private void InitializePlayers()
     {
         var nbPlayers = _players.Count;
-        for (var i = 0; i < 5 - nbPlayers; i++)
+        for (var i = 0; i < MaxHighScores - nbPlayers; i++)
         {
             var player = new Player("Player " + i, 0);
             _players.Add(player);
@@ -128,9 +129,9 @@ public class GameManager : MonoBehaviour
 
         _players.Insert(index, player);
 
-        if (_players.Count > 5)
+        if (_players.Count > MaxHighScores)
         {
-            _players.RemoveAt(5);
+            _players.RemoveAt(MaxHighScores);
         }
     }
 
