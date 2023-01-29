@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
@@ -13,20 +14,17 @@ public class MainManager : MonoBehaviour
 
     public Text scoreText;
     public GameObject gameOverText;
-    
+
     private bool _isGameStarted;
     private int _gamePoints;
-    
-    private bool _isGameOver;
 
-    
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         const float step = 0.6f;
         var perLine = Mathf.FloorToInt(4.0f / step);
-        
-        var pointCountArray = new [] {1,1,2,2,5,5};
+
+        var pointCountArray = new[] { 1, 1, 2, 2, 5, 5 };
         for (var i = 0; i < lineCount; ++i)
         {
             for (var x = 0; x < perLine; ++x)
@@ -38,6 +36,14 @@ public class MainManager : MonoBehaviour
             }
         }
     }
+
+    private void AddPoint(int point)
+    {
+        _gamePoints += point;
+        scoreText.text = $"Score : {_gamePoints}";
+        GameManager.Instance.AddPoints(point);
+    }
+
 
     private void Update()
     {
@@ -54,24 +60,14 @@ public class MainManager : MonoBehaviour
                 ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
             }
         }
-        else if (_isGameOver)
+        else if (GameManager.Instance.isGameOver)
         {
+            gameOverText.SetActive(true);
+
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
         }
-    }
-
-    void AddPoint(int point)
-    {
-        _gamePoints += point;
-        scoreText.text = $"Score : {_gamePoints}";
-    }
-
-    public void GameOver()
-    {
-        _isGameOver = true;
-        gameOverText.SetActive(true);
     }
 }
